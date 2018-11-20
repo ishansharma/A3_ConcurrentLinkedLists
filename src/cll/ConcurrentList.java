@@ -52,7 +52,7 @@ public class ConcurrentList<T> {
          */
         public Node(T item) {
             this.item = item;
-            key = new Integer(item.toString());
+            key = item.hashCode();
         }
 
         @Override
@@ -117,16 +117,47 @@ public class ConcurrentList<T> {
         }
     }
 
+
+    /**
+     * Remove an item from the list
+     *
+     * @param item Item to remove
+     * @return True if item is removed. If it wasn't in the list, false.
+     */
+    public boolean remove(T item) {
+        int key = item.hashCode();
+        boolean snip;
+        while (true) {
+            Window window = find(key);
+            Node pred = window.pred, curr = window.curr;
+            if (curr.key != key) {
+                return false;
+            } else {
+                Node succ = curr.next.getReference();
+                snip = curr.next.compareAndSet(succ, succ, false, true);
+                if (!snip) {
+                    continue;
+                }
+                pred.next.compareAndSet(curr, succ, false, false);
+                return true;
+            }
+        }
+    }
+
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
         Node curr = head;
 
-        while (curr.next != null) {
-            out.append(curr.next.getReference().toString()).append(" ");
-            curr = curr.next.getReference();
+        while (curr != null) {
+            out.append(curr.toString()).append(" ");
+            if (curr.next != null) {
+                curr = curr.next.getReference();
+            } else {
+                curr = null;
+            }
         }
 
-        return out.toString();
+        return out.toString().trim();
     }
 }
