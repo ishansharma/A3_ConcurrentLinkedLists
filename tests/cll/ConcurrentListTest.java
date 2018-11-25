@@ -8,11 +8,11 @@ class ConcurrentListTest {
     @Test
     void add() {
         ConcurrentList l = new ConcurrentList();
-        assertTrue(l.add(1));
-        assertTrue(l.add(2));
-        assertTrue(l.add(3));
-        assertFalse(l.add(1));
-        assertTrue(l.add(0));
+        assertTrue(l.insert(1));
+        assertTrue(l.insert(2));
+        assertTrue(l.insert(3));
+        assertFalse(l.insert(1));
+        assertTrue(l.insert(0));
         assertEquals("0 1 2 3", l.toString());
     }
 
@@ -20,10 +20,10 @@ class ConcurrentListTest {
     void contains() {
         ConcurrentList l = new ConcurrentList();
         assertFalse(l.contains(1));
-        l.add(1);
+        l.insert(1);
         assertTrue(l.contains(1));
         assertFalse(l.contains(10));
-        l.add(0);
+        l.insert(0);
         assertFalse(l.contains(10));
         assertTrue(l.contains(0));
     }
@@ -31,14 +31,14 @@ class ConcurrentListTest {
     @Test
     void remove() {
         ConcurrentList l = new ConcurrentList();
-        l.add(1);
+        l.insert(1);
         assertTrue(l.contains(1));
-        l.remove(1);
+        l.delete(1);
         assertFalse(l.contains(1));
-        l.add(2);
-        l.add(3);
-        l.add(4);
-        l.remove(3);
+        l.insert(2);
+        l.insert(3);
+        l.insert(4);
+        l.delete(3);
         assertFalse(l.contains(3));
         assertTrue(l.contains(2));
         assertTrue(l.contains(4));
@@ -48,7 +48,7 @@ class ConcurrentListTest {
     void string() {
         ConcurrentList l = new ConcurrentList();
         assertEquals("", l.toString());
-        l.add(1);
+        l.insert(1);
         assertEquals("1", l.toString());
     }
 }

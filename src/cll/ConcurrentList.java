@@ -82,7 +82,7 @@ public class ConcurrentList {
      * @param item Item to be added
      * @return True if item was inserted. False if item was not inserted
      */
-    public boolean add(Integer item) {
+    public boolean insert(Integer item) {
         int key = item.hashCode();
         while (true) {
             Node pred = head;
@@ -121,7 +121,7 @@ public class ConcurrentList {
      * @param item Item to be removed
      * @return True if item was removed, False if it wasn't present
      */
-    public boolean remove(Integer item) {
+    public boolean delete(Integer item) {
         int key = item.hashCode();
         while (true) {
             Node pred = head;
