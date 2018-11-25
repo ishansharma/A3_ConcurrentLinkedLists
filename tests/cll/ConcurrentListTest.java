@@ -31,4 +31,16 @@ class ConcurrentListTest {
         assertTrue(l.remove(2));
         assertEquals("0 1 6 7 8 10", l.toString());
     }
+
+    @Test
+    void contains() throws Exception {
+        Integer[] baseArr = new Integer[]{0, 1, 2, 6, 7, 8, 10};
+        ConcurrentList<Integer> l = new ConcurrentList<>(baseArr);
+        assertTrue(l.add(3));
+        assertTrue(l.contains(3));
+        assertTrue(l.contains(2));
+        assertTrue(l.remove(3));
+        assertFalse(l.contains(3));
+        assertFalse(l.contains(-1));
+    }
 }

@@ -144,6 +144,23 @@ public class ConcurrentList<T> {
         }
     }
 
+    /**
+     * Check if an item is it the list
+     *
+     * @param item Item to search for
+     * @return True if item is in list is not marked, False otherwise
+     */
+    public boolean contains(T item) {
+        boolean[] marked = {false};
+        int key = item.hashCode();
+        Node curr = head;
+        while (curr.key < key) {
+            curr = curr.next.getReference();
+            Node succ = curr.next.get(marked);
+        }
+        return (curr.key == key && !marked[0]);
+    }
+
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
