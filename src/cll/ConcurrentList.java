@@ -1,180 +1,170 @@
 package cll;
 
-import java.util.concurrent.atomic.AtomicMarkableReference;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-public class ConcurrentList<T> {
-    Node head;
-
-    /**
-     * Default constructor for creating empty list.
-     * Will create a dummy node for head
-     */
-    public ConcurrentList(T[] arr) throws Exception {
-        // TODO: Remove requirement for initializing with items. Need to handle the null cases at head and tail for that
-        if (arr.length < 3) {
-            throw new Exception("Minimum array length of 3 required");
-        }
-        head = new Node(arr[0]);
-        Node curr = head;
-        Node nextNode;
-
-        for (int i = 1; i < arr.length; i++) {
-            nextNode = new Node(arr[i]);
-            curr.next = new AtomicMarkableReference<>(nextNode, false);
-            curr = curr.next.getReference();
-        }
-    }
-
-    /**
-     * Window class to help with find() operations
-     */
-    public class Window {
-        public Node pred, curr;
-
-        Window(Node myPred, Node myCurr) {
-            pred = myPred;
-            curr = myCurr;
-        }
-    }
+public class ConcurrentList {
+    Node head, tail;
+    int size;
 
     /**
      * Node class that forms the basic block on List
      */
     public class Node {
-        T item;
+        Integer item;
         int key;
-        AtomicMarkableReference<Node> next;
+        boolean marked;
+        Node next;
+        public Lock l = new ReentrantLock();
 
         /**
          * Default constructor to store an item of type T
          *
          * @param item Item to store
          */
-        public Node(T item) {
+        public Node(Integer item) {
             this.item = item;
             key = item.hashCode();
+            marked = false;
+            next = null;
         }
 
         @Override
         public String toString() {
-            return Integer.toString(key);
+            return item.toString();
         }
     }
 
     /**
-     * Find a node in the list
-     *
-     * @param key Key we are looking for
-     * @return Window that contains previous node and current node for the key
+     * Initialize an empty list
      */
-    public Window find(int key) {
-        Node pred = null, succ = null, curr = null;
-        boolean[] marked = {false};
-        boolean snip;
-        retry:
-        while (true) {
-            pred = head;
-            curr = pred.next.getReference();
-            while (true) {
-                succ = curr.next.get(marked);
-                while (marked[0]) {
-                    snip = pred.next.compareAndSet(curr, succ, false, false);
-                    if (!snip) {
-                        continue retry;
-                    }
-                    curr = succ;
-                    succ = curr.next.get(marked);
-                }
-                if (curr.key >= key) {
-                    return new Window(pred, curr);
-                }
-                pred = curr;
-                curr = succ;
-            }
+    public ConcurrentList() {
+        size = 0;
+        head = new Node(Integer.MIN_VALUE);
+        tail = new Node(Integer.MAX_VALUE);
+        head.next = tail;
+    }
+
+    /**
+     * Validation check to make sure that pred and curr are part of the list
+     * and pred still points to curr
+     * @param pred Predecessor of current node
+     * @param curr Current node
+     * @return True if window is still valid, false otherwise
+     */
+    public boolean validate(Node pred, Node curr) {
+        return !pred.marked && !curr.marked && pred.next == curr;
+    }
+
+    /**
+     * Decide if the list contains an item
+     *
+     * @param item Item to check for
+     * @return True if list is present and not logically deleted(marked), false otherwise
+     */
+    public boolean contains(Integer item) {
+        // if there are no items, return false without checking
+        if (size < 0) {
+            return false;
         }
+
+        int key = item.hashCode();
+        Node curr = head;
+        while (curr.key < key) {
+            curr = curr.next;
+        }
+        return curr.key == key && !curr.marked;
     }
 
     /**
      * Add an item to the list
      *
      * @param item Item to be added
-     * @return False if an item already exists
+     * @return True if item was inserted. False if item was not inserted
      */
-    public boolean add(T item) {
+    public boolean add(Integer item) {
         int key = item.hashCode();
         while (true) {
-            Window window = find(key);
-            Node pred = window.pred, curr = window.curr;
-            if (curr.key == key) {
-                return false;
-            } else {
-                Node node = new Node(item);
-                node.next = new AtomicMarkableReference<>(curr, false);
-                if (pred.next.compareAndSet(curr, node, false, false)) {
-                    return true;
+            Node pred = head;
+            Node curr = head.next;
+            while (curr.key < key) {
+                pred = curr;
+                curr = curr.next;
+            }
+            pred.l.lock();
+            try {
+                curr.l.lock();
+                try {
+                    if (validate(pred, curr)) {
+                        if (curr.key == key) {
+                            return false;
+                        } else {
+                            Node node = new Node(item);
+                            node.next = curr;
+                            pred.next = node;
+                            size++;
+                            return true;
+                        }
+                    }
+                } finally {
+                    curr.l.unlock();
                 }
+            } finally {
+                pred.l.unlock();
             }
         }
     }
-
 
     /**
      * Remove an item from the list
      *
-     * @param item Item to remove
-     * @return True if item is removed. If it wasn't in the list, false.
+     * @param item Item to be removed
+     * @return True if item was removed, False if it wasn't present
      */
-    public boolean remove(T item) {
+    public boolean remove(Integer item) {
         int key = item.hashCode();
-        boolean snip;
         while (true) {
-            Window window = find(key);
-            Node pred = window.pred, curr = window.curr;
-            if (curr.key != key) {
-                return false;
-            } else {
-                Node succ = curr.next.getReference();
-                snip = curr.next.compareAndSet(succ, succ, false, true);
-                if (!snip) {
-                    continue;
+            Node pred = head;
+            Node curr = head.next;
+            while (curr.key < key) {
+                pred = curr;
+                curr = curr.next;
+            }
+            pred.l.lock();
+            try {
+                curr.l.lock();
+                try {
+                    if (validate(pred, curr)) {
+                        if (curr.key != key) {
+                            return false;
+                        } else {
+                            curr.marked = true;
+                            pred.next = curr.next;
+                            return true;
+                        }
+                    }
+                } finally {
+                    curr.l.unlock();
                 }
-                pred.next.compareAndSet(curr, succ, false, false);
-                return true;
+            } finally {
+                pred.l.unlock();
             }
         }
     }
 
     /**
-     * Check if an item is it the list
+     * Return list as a string
      *
-     * @param item Item to search for
-     * @return True if item is in list is not marked, False otherwise
+     * @return string representation of the list
      */
-    public boolean contains(T item) {
-        boolean[] marked = {false};
-        int key = item.hashCode();
-        Node curr = head;
-        while (curr.key < key) {
-            curr = curr.next.getReference();
-            Node succ = curr.next.get(marked);
-        }
-        return (curr.key == key && !marked[0]);
-    }
-
     @Override
     public String toString() {
         StringBuilder out = new StringBuilder();
-        Node curr = head;
-
-        while (curr != null) {
-            out.append(curr.toString()).append(" ");
-            if (curr.next != null) {
-                curr = curr.next.getReference();
-            } else {
-                curr = null;
-            }
+        Node curr = head.next;
+        while (curr.next != null) {
+            out.append(curr).append(" ");
+            curr = curr.next;
         }
-
         return out.toString().trim();
     }
 }
