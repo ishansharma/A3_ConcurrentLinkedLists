@@ -90,22 +90,22 @@ public class CLDriver {
         // arg 4: type of workload - read heavy or write heavy
         int upperLimit = 10;
         if (args.length > 0) {
-            upperLimit = Integer.valueOf(args[1]);
+            upperLimit = Integer.valueOf(args[0]);
         }
 
         int numThreads = 4;
         if (args.length > 1) {
-            numThreads = Integer.valueOf(args[2]);
+            numThreads = Integer.valueOf(args[1]);
         }
 
         int opsPerThread = 100;
         if (args.length > 2) {
-            opsPerThread = Integer.valueOf(args[3]);
+            opsPerThread = Integer.valueOf(args[2]);
         }
 
         boolean readHeavy = true;
         if (args.length > 3) {
-            readHeavy = Boolean.valueOf(args[4]);
+            readHeavy = Boolean.valueOf(args[3]);
         }
 
         CLThread[] threads = new CLThread[numThreads];
