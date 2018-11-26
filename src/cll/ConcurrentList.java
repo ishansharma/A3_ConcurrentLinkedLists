@@ -1,11 +1,12 @@
 package cll;
 
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class ConcurrentList {
     Node head, tail;
-    int size;
+    AtomicInteger size;
 
     /**
      * Node class that forms the basic block on List
@@ -39,7 +40,7 @@ public class ConcurrentList {
      * Initialize an empty list
      */
     public ConcurrentList() {
-        size = 0;
+        size = new AtomicInteger(0);
         head = new Node(Integer.MIN_VALUE);
         tail = new Node(Integer.MAX_VALUE);
         head.next = tail;
@@ -64,7 +65,7 @@ public class ConcurrentList {
      */
     public boolean contains(Integer item) {
         // if there are no items, return false without checking
-        if (size < 0) {
+        if (size.intValue() < 0) {
             return false;
         }
 
@@ -102,7 +103,7 @@ public class ConcurrentList {
                             Node node = new Node(item);
                             node.next = curr;
                             pred.next = node;
-                            size++;
+                            size.incrementAndGet();
                             return true;
                         }
                     }
@@ -140,7 +141,7 @@ public class ConcurrentList {
                         } else {
                             curr.marked = true;
                             pred.next = curr.next;
-                            size--;
+                            size.decrementAndGet();
                             return true;
                         }
                     }
@@ -185,7 +186,7 @@ public class ConcurrentList {
                                 Node node = new Node(newItem);
                                 node.next = old_curr;
                                 old_pred.next = node;
-                                size++;
+                                size.incrementAndGet();
                                 return true;
                             }
                         }
@@ -226,7 +227,7 @@ public class ConcurrentList {
                             Node node = new Node(newItem);
                             node.next = new_curr;
                             new_pred.next = node;
-                            size++;
+                            size.incrementAndGet();
                             newAdded = true;
                         }
 
@@ -236,7 +237,7 @@ public class ConcurrentList {
                         } else {
                             old_curr.marked = true;
                             old_pred.next = old_curr.next;
-                            size--;
+                            size.decrementAndGet();
                             oldDeleted = true;
                         }
 
