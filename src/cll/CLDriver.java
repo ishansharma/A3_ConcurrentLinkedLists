@@ -79,7 +79,7 @@ public class CLDriver {
         void replace(int oldItem, int newItem) {
             System.out.println(String.format("%d,%d,replace,started,%d,%d,", System.nanoTime() - baseTime, id, oldItem, newItem));
             boolean res = l.replace(oldItem, newItem);
-            System.out.println(String.format("%d,%d,replace,started,%d,%d,%s", System.nanoTime() - baseTime, id, oldItem, newItem, res));
+            System.out.println(String.format("%d,%d,replace,finished,%d,%d,%s", System.nanoTime() - baseTime, id, oldItem, newItem, res));
         }
     }
 
