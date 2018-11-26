@@ -72,7 +72,7 @@ public class CLDriver {
 
         void delete(int item) {
             System.out.println(String.format("%d,%d,delete,started,%d,,", System.nanoTime() - baseTime, id, item));
-            boolean res = l.insert(item);
+            boolean res = l.delete(item);
             System.out.println(String.format("%d,%d,delete,finished,%d,,%s", System.nanoTime() - baseTime, id, item, res));
         }
 
