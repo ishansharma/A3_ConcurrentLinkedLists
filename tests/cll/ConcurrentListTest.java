@@ -78,7 +78,22 @@ class ConcurrentListTest {
 
         assertTrue(l.replace(7, 8));
         assertEquals("1 5 8 10", l.toString());
+        assertTrue(l.replace(10, 2));
+        assertEquals("1 2 5 8", l.toString());
 
-        assertEquals(l.size.intValue(), 4);
+        assertTrue(l.replace(5, 2));
+        assertEquals("1 2 8", l.toString());
+
+        l.insert(9);
+        assertTrue(l.replace(2, 3));
+        assertEquals("1 3 8 9", l.toString());
+
+        assertTrue(l.replace(1, 2));
+        assertEquals("2 3 8 9", l.toString());
+
+        assertTrue(l.replace(9, 2));
+        assertEquals("2 3 8", l.toString());
+
+        assertEquals(l.size.intValue(), 3);
     }
 }
