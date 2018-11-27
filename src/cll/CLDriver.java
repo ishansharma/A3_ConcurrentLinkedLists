@@ -133,5 +133,7 @@ public class CLDriver {
                 }
             }
         }
+
+        System.out.println(l);
     }
 }

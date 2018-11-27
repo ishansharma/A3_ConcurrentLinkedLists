@@ -50,6 +50,7 @@ public class ConcurrentList {
     /**
      * Validation check to make sure that pred and curr are part of the list
      * and pred still points to curr
+     *
      * @param pred Predecessor of current node
      * @param curr Current node
      * @return True if window is still valid, false otherwise
@@ -216,40 +217,49 @@ public class ConcurrentList {
                 }
 
                 old_pred.l.lock();
-                old_curr.l.lock();
-                new_pred.l.lock();
-                new_curr.l.lock();
                 try {
-                    if (validate(old_pred, old_curr) && validate(new_pred, new_curr)) {
-                        // add new key if it's not present
-                        if (new_curr.key == k_new) {
-                            newAdded = false;
-                        } else {
-                            Node node = new Node(newItem);
-                            node.next = new_curr;
-                            new_pred.next = node;
-                            size.incrementAndGet();
-                            newAdded = true;
-                        }
+                    old_curr.l.lock();
+                    try {
+                        new_pred.l.lock();
+                        try {
+                            new_curr.l.lock();
+                            try {
+                                if (validate(old_pred, old_curr) && validate(new_pred, new_curr)) {
+                                    // add new key if it's not present
+                                    if (new_curr.key == k_new) {
+                                        newAdded = false;
+                                    } else {
+                                        Node node = new Node(newItem);
+                                        node.next = new_curr;
+                                        new_pred.next = node;
+                                        size.incrementAndGet();
+                                        newAdded = true;
+                                    }
 
-                        // remove old key if it's present
-                        if (old_curr.key != k_old) {
-                            oldDeleted = false;
-                        } else {
-                            old_curr.marked = true;
-                            old_pred.next = old_curr.next;
-                            size.decrementAndGet();
-                            oldDeleted = true;
-                        }
+                                    // remove old key if it's present
+                                    if (old_curr.key != k_old) {
+                                        oldDeleted = false;
+                                    } else {
+                                        old_curr.marked = true;
+                                        old_pred.next = old_curr.next;
+                                        size.decrementAndGet();
+                                        oldDeleted = true;
+                                    }
 
-                        // if we did any of the two operations successfully, return true
-                        return oldDeleted || newAdded;
+                                    // if we did any of the two operations successfully, return true
+                                    return oldDeleted || newAdded;
+                                }
+                            } finally {
+                                new_curr.l.unlock();
+                            }
+                        } finally {
+                            new_pred.l.unlock();
+                        }
+                    } finally {
+                        old_curr.l.unlock();
                     }
                 } finally {
                     old_pred.l.unlock();
-                    old_curr.l.unlock();
-                    new_pred.l.unlock();
-                    new_curr.l.unlock();
                 }
             }
         }
