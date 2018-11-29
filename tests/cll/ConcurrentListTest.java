@@ -94,6 +94,6 @@ class ConcurrentListTest {
         assertTrue(l.replace(9, 2));
         assertEquals("2 3 8", l.toString());
 
-        assertEquals(l.size.intValue(), 3);
+        assertEquals(l.size(), 3);
     }
 }
